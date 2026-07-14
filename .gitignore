@@ -1,0 +1,37 @@
+# Python build / environments
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Editors / tooling
+.idea/
+.vscode/
+
+# Internal-only material (not published)
+AGENTS.md
+research/
+
+# Raw local device and application artifacts
+captures/
+pcaps/
+*.pcap
+*.pcapng
+*.apk
+
+# Secrets and local configuration
+.env
+*.local.yaml
+*.local.yml
+config.local.yaml
+commands.local.json
+*.local.json
+secrets.*
+!src/vstarcamctl/secrets.py
+

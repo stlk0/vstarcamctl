@@ -1,0 +1,15 @@
+host: 192.168.1.100
+vuid: VE_REPLACE_WITH_DEVICE_ID
+username: admin
+password: "${VSTARCAM_PASSWORD}"
+psk: vstarcam2018
+udp_port: 12833
+discovery_port: 32108
+auth_mode: basic
+account_id: null
+login_hash: null
+login_token: null
+transport: aiopppp
+timeout: 8.0
+retries: 1
+

@@ -1,0 +1,84 @@
+name: Bug report
+description: Report a reproducible problem in the library or CLI
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Remove device IDs, serials, IP/MAC addresses,
+        SSIDs, credentials, tokens, hashes, private media, and full `params`
+        output before submitting. Report vulnerabilities through the private
+        security channel instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: VStarcamCtl version
+      placeholder: "0.1.0 or commit SHA"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.13.5"
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04, macOS 15, Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: camera_family
+    attributes:
+      label: Camera family or firmware (optional and sanitized)
+      description: Do not include a device ID, serial number, address, or account data.
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe sequence that reproduces the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or traceback
+      description: Do not paste full status/parameter output or command URLs containing real values.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I removed all real credentials and private identifying device/network data.
+          required: true
+        - label: I own the affected device or am explicitly authorized to use it.
+          required: true

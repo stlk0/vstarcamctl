@@ -1,0 +1,489 @@
+version: 1
+commands:
+  - name: status
+    path: "/get_status.cgi?vuid={vuid?}"
+    category: status
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read device status without changing configuration.
+    expected_response: JavaScript-style variable assignments.
+    notes: Confirmed through legacy CGI framing; it precedes account authentication.
+
+  - name: params
+    path: "/get_params.cgi"
+    category: params
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read the broad device parameter snapshot.
+    expected_response: JavaScript-style variable assignments.
+    notes: Confirmed; response may contain credentials and is masked by the CLI.
+
+  - name: datetime_set
+    path: "/set_datetime.cgi?tz={timezone}&ntp_enable={enabled}&ntp_svr={server}&now={unix_time}"
+    category: time
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Set the fixed UTC offset and NTP configuration, and calibrate the camera clock from Unix time.
+    expected_response: Device-specific acknowledgement; verify normalized get_params.cgi fields after sending.
+    notes: Validated on compatible hardware. Firmware tz uses the inverse sign of the conventional UTC offset; preserve adjacent timezone and server values and verify normalized fields after sending.
+
+  - name: eye4_authentication
+    path: "/eye4_authentication.cgi"
+    category: auth
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Authenticate the configured account token for subsequent local CGI reads.
+    expected_response: Response code 0x7108 with result=0 and eye4_auth=1.
+    notes: Performed once per protected PPPP session in observed mode; requires a fresh account token.
+
+  - name: siren_on
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&siren=1"
+    category: siren
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Turn the camera siren on.
+    expected_response: Success result or device-specific acknowledgement.
+    notes: Validated on compatible hardware, including the physical siren state.
+
+  - name: siren_off
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&siren=0"
+    category: siren
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Turn the camera siren off.
+    expected_response: Success result or device-specific acknowledgement.
+    notes: Validated on compatible hardware, including the physical siren state.
+
+  - name: white_light_on
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&light=1"
+    category: white_light
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Turn the white light on.
+    expected_response: Success result or device-specific acknowledgement.
+    notes: Validated on compatible hardware, including the physical light state.
+
+  - name: white_light_off
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&light=0"
+    category: white_light
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Turn the white light off.
+    expected_response: Success result or device-specific acknowledgement.
+    notes: Validated on compatible hardware, including the physical light state.
+
+  - name: night_vision_status
+    path: "/get_camera_params.cgi"
+    category: night_vision
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read image settings and normalize only the current night-vision mode.
+    expected_response: night_vision_mode and ircut assignments when supported.
+    notes: Validated on compatible hardware for the normalized night-vision modes.
+
+  - name: night_vision_color_set
+    path: "/camera_control.cgi?param=33&value={mode}"
+    category: night_vision
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Select black-and-white base mode, full-color mode, or smart mode.
+    expected_response: Device-specific success acknowledgement; verify with get_camera_params.cgi.
+    notes: Getter round-trip validated; physical video and lighting effects remain unconfirmed, so the write stays experimental.
+
+  - name: night_vision_low_light_set
+    path: "/camera_control.cgi?param=14&value={mode}"
+    category: night_vision
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Select starlight or black-and-white low-light behavior.
+    expected_response: Device-specific success acknowledgement; verify the ircut field with get_camera_params.cgi.
+    notes: Getter round-trip validated; the physical video effect remains unconfirmed, so the write stays experimental.
+
+  - name: infrared_light_status
+    path: "/trans_cmd_string.cgi?cmd=2120&command=1"
+    category: infrared_light
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read the separately controlled infrared illuminator state.
+    expected_response: InfraredLaser assignment when supported.
+    notes: Validated through getter state changes on compatible hardware.
+
+  - name: infrared_light_set
+    path: "/trans_cmd_string.cgi?cmd=2120&command=0&InfraredLaser={enabled}"
+    category: infrared_light
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Enable or disable the separately controlled infrared illuminator.
+    expected_response: Device-specific acknowledgement with an optional InfraredLaser field.
+    notes: Getter round-trip validated; physical IR illumination remains unconfirmed, so the write stays experimental.
+
+  - name: camera_account_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&ExUser={username}&ExPwd={password}"
+    category: account
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    recovery_required: true
+    tested_on_device: true
+    expected_effect: Change WebPwd, the external camera password used by RTSP.
+    expected_response: DualAuthentication=2; RTSP authentication changes immediately.
+    notes: One-way credential change validated through RTSP authentication; keep experimental until inverse-action and recovery validation are available.
+
+  - name: camera_owner_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&OwnerUser={username}&OwnerPwd={password}"
+    category: account
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: true
+    expected_effect: Attempt to update app-owner metadata, not WebPwd.
+    expected_response: Returned a network-parameter block without changing WebPwd or RTSP authentication.
+    notes: Did not change the intended RTSP credential on validated hardware; blocked as unsupported.
+
+  - name: camera_user3_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&user3={username}&pwd3={password}"
+    category: account
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: true
+    expected_effect: Attempt to change the legacy slot-3 password, not the RTSP owner password.
+    expected_response: Returned DualAuthentication=2 without changing WebPwd or RTSP authentication.
+    notes: Did not change the intended RTSP credential on validated hardware; blocked as unsupported.
+
+  - name: rtsp_status
+    path: "/get_rtsp.cgi"
+    category: rtsp
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read RTSP enable state, port, authentication state, and credential source.
+    expected_response: rtspenable, rtspport, rtspuser, and rtsppwd assignments.
+    notes: Validated on compatible hardware; high-level output reports the credential source without returning credential values.
+
+  - name: rtsp_set
+    path: "/set_rtsp.cgi?rtspenable={enabled}&rtspport={port}&rtspuser={username}&rtsppwd={password}"
+    category: rtsp
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Enable or disable RTSP and update its port and dedicated RTSP credential fields.
+    expected_response: Device-specific success acknowledgement; RTSP may restart.
+    notes: Not device-validated; send once without retry and verify with the confirmed getter.
+
+  - name: onvif_status
+    path: "/get_onvif.cgi"
+    category: onvif
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read the ONVIF service enable state.
+    expected_response: onvifenable assignment and optional onvifport.
+    notes: Validated on compatible hardware.
+
+  - name: onvif_set
+    path: "/set_onvif.cgi?onvifenable={enabled}"
+    category: onvif
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Enable or disable the ONVIF service.
+    expected_response: Device-specific success acknowledgement; ONVIF may restart.
+    notes: Not device-validated; send once and verify with the confirmed getter.
+
+  - name: record_status
+    path: "/get_record.cgi"
+    category: audio
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read recording, encoder, storage, and record-audio settings.
+    expected_response: record_audio and related recording assignments.
+    notes: Validated on compatible hardware.
+
+  - name: microphone_volume_set
+    path: "/camera_control.cgi?param=24&value={level}"
+    category: audio
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Set the camera microphone/input gain to a level from 0 through 31.
+    expected_response: Device-specific acknowledgement; verify involume through get_camera_params.cgi.
+    notes: Getter round-trip validated; physical gain change remains unconfirmed, so the write stays experimental.
+
+  - name: speaker_volume_set
+    path: "/camera_control.cgi?param=25&value={level}"
+    category: audio
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Set the camera speaker/output gain to a level from 0 through 31.
+    expected_response: Device-specific acknowledgement; verify outvolume through get_camera_params.cgi.
+    notes: Getter round-trip validated; physical gain change remains unconfirmed, so the write stays experimental.
+
+  - name: audio_talk_start
+    path: "/audiostream.cgi?streamid=7"
+    category: audio
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Start a G.711 A-law two-way-audio session before channel-3 voice frames are sent.
+    expected_response: Legacy response code 0x6031 and a device-specific acknowledgement.
+    notes: A previous start lost the session before acknowledgement, leaving the outcome unknown. Do not retry this branch.
+
+  - name: audio_talk_stop
+    path: "/audiostream.cgi?streamid=16"
+    category: audio
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Stop the camera audio/talk session and restore an inactive talk state.
+    expected_response: Legacy response code 0x6031 and a device-specific acknowledgement.
+    notes: The cleanup stop lacks getter or physical confirmation; keep it unconfirmed and always attempt cleanup when applicable.
+
+  - name: audio_talk_adpcm_channel
+    path: "pppp://channel/3?codec=ima_adpcm"
+    category: audio
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: failed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Play bounded half-duplex microphone audio through the camera speaker without an audiostream CGI start.
+    expected_response: A PPPP DRW acknowledgement for each channel-3 frame; audible playback requires physical confirmation.
+    notes: Standalone channel-3 playback produced no audible effect and is classified failed; do not retry it. The same-session livestream prerequisite remains unvalidated.
+
+  - name: pppp_livestream_start
+    path: "/livestream.cgi?streamid=10&substream={substream}"
+    category: audio
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Start the same-session PPPP video stream prerequisite before half-duplex talk.
+    expected_response: Legacy response code 0x6037 followed by video DRW channel-1 frames.
+    notes: Not device-validated; use only as the guarded same-session talk prerequisite.
+
+  - name: pppp_livestream_stop
+    path: "/livestream.cgi?streamid=16&substream=0"
+    category: audio
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Stop the same-session PPPP video stream after talk.
+    expected_response: Legacy response code 0x6037 and cessation of video DRW channel-1 frames.
+    notes: Always attempt as cleanup after a started livestream.
+
+  - name: audio_talk_adpcm_with_livestream
+    path: "pppp://session/talk?codec=ima_adpcm&prerequisite=livestream"
+    category: audio
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Play bounded half-duplex ADPCM after starting PPPP livestream on the same session, then stop the stream.
+    expected_response: Stream-start acknowledgement, channel-1 video, acknowledged channel-3 audio frames, and stream-stop acknowledgement; audible output requires physical confirmation.
+    notes: Implementation is unit-tested but not device-validated; keep experimental.
+
+  - name: record_audio_set
+    path: "/set_recordsch.cgi?record_audio={enabled}"
+    category: audio
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Include or exclude audio in camera recordings.
+    expected_response: Device-specific success acknowledgement.
+    notes: Not device-validated; send once and verify with the confirmed getter.
+
+  - name: motion_detection_set
+    path: "/set_alarm.cgi?enable_alarm_audio={alarm_audio}&motion_armed={enabled}&motion_sensitivity={sensitivity}"
+    category: motion_detection
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Enable or disable motion detection while preserving sensitivity and the adjacent alarm-audio state.
+    expected_response: Device-specific acknowledgement; verify alarm_motion_armed and alarm_motion_sensitivity with get_params.cgi.
+    notes: Configuration round-trip validated; the physical alarm effect remains unconfirmed, so keep experimental.
+
+  - name: human_detection_status
+    path: "/trans_cmd_string.cgi?cmd=2126&command=1"
+    category: human_detection
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read humanoid frame, sensitivity, and zoom-tracking fields.
+    expected_response: Device-dependent assignments including bHumanoidFrame, sensitive, or humanoid_zoom.
+    notes: Validated for frame and sensitivity state reads; compatible firmware may report sensitivity value 0.
+
+  - name: human_detection_set
+    path: "/trans_cmd_string.cgi?cmd=2106&command=4&humanDetection={sensitivity}&DistanceAdjust={distance}&HumanoidDetection={enabled}"
+    category: human_detection
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Enable or disable humanoid detection and set its 1-3 sensitivity and distance levels.
+    expected_response: Device-specific success acknowledgement.
+    notes: Not device-validated; keep experimental and verify after one attempt.
+
+  - name: human_sensitivity_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&sensitive={sensitivity}"
+    category: human_detection
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Set the humanoid sensitivity level exposed by the 2126 settings family.
+    expected_response: Device-specific success acknowledgement.
+    notes: Getter and physical detection effect validated with an inverse action.
+
+  - name: human_frame_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&bHumanoidFrame={enabled}"
+    category: human_detection
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Show or hide humanoid target frames in the video.
+    expected_response: Device-specific success acknowledgement; verify through command 2126 read.
+    notes: Getter and visible-frame effect validated with an inverse action.
+
+  - name: human_tracking_status
+    path: "/trans_cmd_string.cgi?cmd=2127&command=1"
+    category: human_detection
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    expected_effect: Read humanoid PTZ tracking state.
+    expected_response: An enable assignment when supported.
+    notes: Validated through getter state changes on compatible hardware.
+
+  - name: human_tracking_set
+    path: "/trans_cmd_string.cgi?cmd=2127&command=0&enable={enabled}"
+    category: human_detection
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: failed
+    retry_policy: one_shot
+    tested_on_device: true
+    expected_effect: Enable or disable PTZ tracking of detected people.
+    expected_response: Device-specific success acknowledgement; verify through command 2127 read.
+    notes: An acknowledgement does not prove PTZ support; physical tracking is unsupported on validated fixed-mount hardware.
+
+  - name: human_zoom_tracking_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&humanoid_zoom={enabled}"
+    category: human_detection
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    expected_effect: Enable or disable humanoid zoom tracking when supported.
+    expected_response: Device-specific success acknowledgement; verify through command 2126 read.
+    notes: Requires the support_humanoid_zoom capability and is not device-validated.
+
+  - name: wifi_scan
+    path: "/wifi_scan.cgi"
+    category: wifi
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: hypothesis
+    tested_on_device: false
+    expected_effect: Request a local Wi-Fi access-point scan.
+    expected_response: Indexed ap_ssid/ap_channel/ap_security arrays or a device acknowledgement.
+    notes: Not device-validated; keep experimental.
+
+  - name: wifi_set
+    path: "/set_wifi.cgi?ssid={ssid}&channel={channel}&authtype={authtype}&wpa_psk={wpa_psk}&enable=1"
+    category: wifi
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    recovery_required: true
+    tested_on_device: false
+    expected_effect: Move the camera to the supplied Wi-Fi network and potentially drop the session.
+    expected_response: Device-specific acknowledgement; loss of connection leaves the outcome uncertain.
+    notes: Requires experimental, confirm, and recovery-ready gates and is never retried.
+
+  - name: trans_cmd_4120
+    path: "/trans_cmd_string.cgi?cmd=4120&command=0"
+    category: unknown
+    read_or_write: write
+    risk_level: unknown
+    confirmation_status: observed_unconfirmed
+    tested_on_device: false
+    expected_effect: Unknown.
+    expected_response: Unknown.
+    notes: Unclassified write; keep experimental until effect and inverse-action validation are available.
+
+  - name: trans_cmd_8000
+    path: "/trans_cmd_string.cgi?cmd=8000&command=0"
+    category: unknown
+    read_or_write: write
+    risk_level: unknown
+    confirmation_status: observed_unconfirmed
+    tested_on_device: false
+    expected_effect: Unknown.
+    expected_response: Unknown.
+    notes: Unclassified write; keep experimental until effect and inverse-action validation are available.
+

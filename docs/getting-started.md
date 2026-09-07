@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- Python 3.11–3.13. Python 3.14 is not currently supported.
+- Python 3.11 or newer; tested on Python 3.11–3.14.
 - A VStarcam-compatible camera reachable from the same local network; see the
   [tested compatibility limits](../README.md#compatibility).
 - Credentials for a camera you own or are authorized to control.
@@ -22,7 +22,7 @@ credentials.
 ## Install
 
 Before the first PyPI release, install from a source checkout. From the
-repository root, create an environment with Python 3.11–3.13:
+repository root, create an environment with Python 3.11 or newer:
 
 ```bash
 python -m venv .venv

@@ -40,7 +40,7 @@ the [MIT License](https://github.com/stlk0/vstarcamctl/blob/main/LICENSE).
 
 ## Requirements
 
-- Python 3.11–3.13. Python 3.14 is not currently supported.
+- Python 3.11 or newer; tested on Python 3.11–3.14.
 - A compatible camera reachable on the same local network.
 - Authorized camera credentials.
 - FFmpeg tools only for video, recording, snapshots, listening, or talk.
@@ -48,7 +48,7 @@ the [MIT License](https://github.com/stlk0/vstarcamctl/blob/main/LICENSE).
 ## Installation
 
 Before the first PyPI release, install from the repository root using
-Python 3.11–3.13:
+Python 3.11 or newer:
 
 ```bash
 python -m venv .venv

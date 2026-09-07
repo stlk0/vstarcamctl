@@ -7,7 +7,7 @@ name = "vstarcamctl"
 version = "0.2.0"
 description = "Local PPPP/CGI control tools for VStarcam-compatible cameras"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{name = "VStarcamCtl contributors"}]
@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Multimedia :: Video :: Capture",
     "Topic :: System :: Networking",
 ]

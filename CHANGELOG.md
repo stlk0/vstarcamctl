@@ -41,7 +41,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Use the string `"0"` in the Wi-Fi setup QR when no account ID is supplied.
 - Treat an omitted account ID as local owner zero and allow guarded first
   external-password enable with local credentials, preserving the CGI password.
-- Support Python 3.11–3.13, with unit tests for each version in CI.
+- Support Python 3.11–3.14, with unit tests for each version in CI, and remove
+  the unsubstantiated upper Python installation bound.
 - Share acknowledgement-error handling, discovery descriptor construction,
   media output checks, and CLI cleanup without changing command policies.
 - Use Hatchling's reproducible builds instead of rewriting distribution
@@ -73,9 +74,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Reduced broad camera responses to normalized or allowlisted public results
   where practical; the explicit `get_params()` API remains documented as
   sensitive.
-- Moved `aiopppp` into the core installation and set the supported interpreter
-  range to Python 3.13 while that pinned dependency remains incompatible with
-  Python 3.14.
+- Moved `aiopppp` into the core installation and initially limited the supported
+  interpreter to Python 3.13.
 - Made configuration immutable and redacted its private fields from `repr()`.
 - Unified profile and QR output through an atomic private-file writer.
 - Made discovery-created private profiles the primary CLI onboarding path.

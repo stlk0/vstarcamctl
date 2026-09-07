@@ -19,8 +19,9 @@ unclear or incomplete.
 
 ## Development setup
 
-VStarcamCtl supports Python 3.11–3.13. CI checks the public unit suite on each
-supported version. Python 3.14 is not currently supported.
+VStarcamCtl requires Python 3.11 or newer. CI checks the public unit suite on
+Python 3.11–3.14. Add an upper version bound only for a reproduced incompatibility;
+versions outside the CI matrix are unverified, not automatically incompatible.
 
 ```bash
 git clone https://github.com/stlk0/vstarcamctl.git

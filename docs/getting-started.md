@@ -203,8 +203,16 @@ selected profile, including when switching cameras.
 
 ## Authentication modes
 
-`basic` uses the configured camera username and password and is the simplest
-starting point.
+`basic` uses the configured camera username and local CGI password. Omit
+`account_id` or set it to `"0"` for account-free control; both select the same
+local authentication flow. Before protected commands, the library checks the
+login state and completes any required local authentication in the same
+session, without a vendor account or token. This also supports protected CGI
+after first `WebPwd` enable on the tested camera.
+
+The local CGI password and external `WebPwd` serve different purposes.
+Setting a new `WebPwd` for RTSP does not replace `VSTARCAM_PASSWORD`; supply
+the new stream password separately as `VSTARCAM_RTSP_PASSWORD`.
 
 `observed` additionally requires `account_id`, `login_hash`, and `login_token`
 from an authorized local configuration; it still uses the local camera

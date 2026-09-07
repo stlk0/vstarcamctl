@@ -195,7 +195,7 @@ class AioppppTransport:
         self.config = config
         self._session = None
         self._connected = False
-        self._observed_authenticated = False
+        self._authenticated = False
         self._lifecycle_lock = asyncio.Lock()
         self._request_lock = asyncio.Lock()
 
@@ -567,7 +567,7 @@ class AioppppTransport:
             return
         if self._session is not None:
             await self._close_unlocked()
-        self._observed_authenticated = False
+        self._authenticated = False
         if not self.config.host:
             raise TransportError("host is required for aiopppp transport")
         api = _import_aiopppp()
@@ -692,7 +692,7 @@ class AioppppTransport:
                 abort("PPPP session closed during video capture")
         self._session = None
         self._connected = False
-        self._observed_authenticated = False
+        self._authenticated = False
         if session is None:
             return
 
@@ -1134,45 +1134,58 @@ class AioppppTransport:
 
         expected_code = self._expected_response_code(command)
         endpoint = command[4:].split("?", 1)[0]
-        needs_observed_auth = endpoint not in {
+        needs_auth = endpoint not in {
             "/get_status.cgi",
             "/eye4_authentication.cgi",
         }
-        if (
-            self.config.auth_mode == "observed"
-            and needs_observed_auth
-            and not self._observed_authenticated
-        ):
+        if needs_auth and not self._authenticated:
             try:
-                await self._send_framed(
+                login_response = await self._send_framed(
                     format_login_status_request(self.config),
                     timeout=timeout,
                     expected_code=0x6001,
                 )
-                auth_response = await self._send_framed(
-                    format_eye4_auth_request(self.config),
-                    timeout=timeout,
-                    expected_code=0x7108,
-                )
+                try:
+                    login_payload = parse_vstarcam_response(login_response)
+                except ResponseParseError as exc:
+                    raise TransportError("camera returned malformed login metadata") from exc
+                login_result = login_payload.get("result")
+                if (type(login_result) is int and login_result < 0) or (
+                    isinstance(login_result, str) and re.fullmatch(r"-\d+", login_result)
+                ):
+                    raise TransportAuthenticationError("camera rejected the configured login")
+                dual_authentication = login_payload.get("DualAuthentication", 0)
+                if self.config.auth_mode == "basic" and (
+                    type(dual_authentication) is not int or dual_authentication not in (0, 1, 2)
+                ):
+                    raise TransportError("camera returned invalid DualAuthentication metadata")
+                needs_dual_auth = self.config.auth_mode == "observed" or dual_authentication != 0
+                if needs_dual_auth:
+                    auth_response = await self._send_framed(
+                        format_eye4_auth_request(self.config),
+                        timeout=timeout,
+                        expected_code=0x7108,
+                    )
             except TransportTimeoutError as exc:
                 if not self.connected:
                     raise TransportError(
                         "camera closed the session during account authentication"
                     ) from exc
                 raise
-            try:
-                auth_payload = parse_vstarcam_response(auth_response)
-            except ResponseParseError as exc:
-                raise TransportError(
-                    "camera returned malformed account authentication metadata"
-                ) from exc
-            if (
-                len(_EYE4_AUTH_ASSIGNMENT_RE.findall(auth_response)) != 1
-                or type(auth_payload.get("eye4_auth")) is not int
-                or auth_payload["eye4_auth"] != 1
-            ):
-                raise TransportError("camera rejected the configured account authentication")
-            self._observed_authenticated = True
+            if needs_dual_auth:
+                try:
+                    auth_payload = parse_vstarcam_response(auth_response)
+                except ResponseParseError as exc:
+                    raise TransportError(
+                        "camera returned malformed account authentication metadata"
+                    ) from exc
+                if (
+                    len(_EYE4_AUTH_ASSIGNMENT_RE.findall(auth_response)) != 1
+                    or type(auth_payload.get("eye4_auth")) is not int
+                    or auth_payload["eye4_auth"] != 1
+                ):
+                    raise TransportError("camera rejected the configured account authentication")
+            self._authenticated = True
 
         return await self._send_framed(
             command,

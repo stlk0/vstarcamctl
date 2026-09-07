@@ -75,11 +75,11 @@ non-default `source_address` or `discovery_port` consistently to both
 
 One validated freshly reset VE-family target accepted the explicit local
 credential `password="888888"`. This is model- and state-specific, is not tried
-automatically, and must not be used after the camera password has changed. Some
-factory onboarding states additionally require an explicit `account_id`. The
-tested reset state accepted `account_id="0"` with the known local password for
-protected reads; use an explicit `VStarcamConfig`. This does not authorize or
-validate the later owner-account enable sequence.
+automatically, and must not be used after the local CGI password has changed.
+In `basic` mode, omitted `account_id` and `account_id="0"` select the same
+account-free authentication flow. The tested camera accepted protected reads
+both after reset onboarding and after first `WebPwd` enable and restart.
+Changing that external password does not change the local CGI password.
 
 ## Persistent configuration
 
@@ -223,10 +223,12 @@ is confirmed but remains one-shot; speaker volume still requires
 `set_camera_account_password()` changes an existing `WebPwd` with one write.
 When `WebPwd` is absent, it uses the camera-reported authentication state to run
 the guarded first-enable sequence and restart, then verifies the password on a
-fresh session. First enable requires `auth_mode="observed"` with authorized
-account values supplied privately. `basic` with an absent or zero account ID
-is refused before any first-enable write; see the
-[account and RTSP limitations](experimental-features.md#external-camera-account-webpwd).
+fresh session. First enable supports `auth_mode="basic"` with an absent or
+zero account ID, using the configured local CGI password as the owner
+credential. `auth_mode="observed"` uses the authorized account values supplied
+privately. Keep the CGI password unchanged when setting the new external
+password; see the
+[account and RTSP workflow](experimental-features.md#external-camera-account-webpwd).
 Both the existing-account and first-enable password steps require exact
 `result=0` and `DualAuthentication=2` acknowledgement before fresh-session
 effect verification can report success. The returned mapping is normalized and

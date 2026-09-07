@@ -13,7 +13,7 @@ from vstarcamctl.cgi import (
     format_login_status_request,
     validate_raw_path,
 )
-from vstarcamctl.errors import RawCommandError
+from vstarcamctl.errors import ConfigError, RawCommandError
 
 
 @pytest.mark.parametrize(
@@ -66,6 +66,31 @@ def test_basic_auth_uses_apk_factory_suffix_when_account_id_is_available():
     query = parse_qs(urlsplit(result).query)
     assert query["userId"] == ["account"]
     assert query["loginpas"] == ["camera-secret"]
+
+
+@pytest.mark.parametrize("account_id", [None, "0"])
+def test_no_account_auth_uses_zero_identity_and_local_password(account_id):
+    assert format_get_request("/get_params.cgi", config(account_id=account_id)) == (
+        "GET /get_params.cgi?loginuse=admin&userId=0&loginpas=camera-secret"
+        "&user=admin&pwd=camera-secret&"
+    )
+    assert format_eye4_auth_request(config(account_id=account_id)) == (
+        "GET /eye4_authentication.cgi?loginAccount=0&loginToken=&"
+        "loginuse=admin&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
+    )
+
+
+def test_nonzero_account_preflight_requires_observed_credentials():
+    with pytest.raises(RawCommandError, match="observed account credentials"):
+        format_eye4_auth_request(config(account_id="account"))
+
+
+@pytest.mark.parametrize("missing", ["account_id", "login_hash", "login_token"])
+def test_observed_preflight_still_requires_all_account_credentials(missing):
+    values = {"account_id": "account", "login_hash": "digest", "login_token": "token"}
+    values[missing] = None
+    with pytest.raises(ConfigError, match="observed auth requires"):
+        format_eye4_auth_request(config(auth_mode="observed", **values))
 
 
 def test_wifi_set_uses_trusted_lowercase_endpoint_userid():
@@ -144,5 +169,6 @@ def test_login_status_path_rejects_invalid_username(username):
 
 def test_exact_get_request_shape():
     assert format_get_request("/get_params.cgi?x=1", config()) == (
-        "GET /get_params.cgi?x=1&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_params.cgi?x=1&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     )

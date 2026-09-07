@@ -1160,9 +1160,84 @@ async def test_observed_authentication_runs_once_per_protected_session():
     assert "/trans_cmd_string.cgi" in calls[3][0]
 
 
+@pytest.mark.parametrize("account_id", [None, "0"])
+@pytest.mark.parametrize("dual_authentication", [None, 0, 1, 2])
+async def test_no_account_authentication_orders_requests_and_repeats_after_reconnect(
+    monkeypatch, account_id, dual_authentication
+):
+    session_class, sessions = lifecycle_session_class(ready=True)
+    transport = lifecycle_transport(monkeypatch, session_class)
+    transport.config = VStarcamConfig(
+        host="192.0.2.10", password="camera-password", account_id=account_id, timeout=1
+    )
+    calls = []
+
+    async def fake_send(command, *, timeout, expected_code):
+        calls.append((transport._session, command, expected_code))
+        if "/get_status.cgi" in command:
+            return "result=0;" + (
+                f"DualAuthentication={dual_authentication};"
+                if dual_authentication is not None
+                else ""
+            )
+        if "/eye4_authentication.cgi" in command:
+            assert "loginAccount=0&loginToken=&" in command
+            return "result=0;eye4_auth=1;"
+        return "result=0;"
+
+    transport._send_framed = fake_send
+    expected = [("/get_status.cgi", 0x6001)]
+    if dual_authentication in (1, 2):
+        expected.append(("/eye4_authentication.cgi", 0x7108))
+    expected.extend([("/get_params.cgi", 0x6002), ("/trans_cmd_string.cgi", 0x60D1)])
+
+    for _ in range(2):
+        await transport.connect()
+        try:
+            await transport.request("GET /get_params.cgi?x=1&", timeout=2)
+            await transport.request(
+                "GET /trans_cmd_string.cgi?cmd=2109&command=0&light=0&", timeout=2
+            )
+        finally:
+            await transport.close()
+
+    for session in sessions:
+        assert [
+            (command[4:].split("?", 1)[0], code)
+            for called_session, command, code in calls
+            if called_session is session
+        ] == expected
+    assert len(sessions) == 2
+
+
+@pytest.mark.parametrize("auth_mode", ["basic", "observed"])
+@pytest.mark.parametrize("result", ["-1", "-2", "-3", "'-3'"])
+async def test_rejected_login_status_stops_before_authentication_or_protected_write(
+    auth_mode, result
+):
+    config = observed_config() if auth_mode == "observed" else VStarcamConfig(password="secret")
+    transport = AioppppTransport(config)
+    transport._connected = True
+    transport._session = object()
+    calls = []
+
+    async def fake_send(command, *, timeout, expected_code):
+        calls.append(command)
+        return f"var result={result}; var DualAuthentication=2;"
+
+    transport._send_framed = fake_send
+    with pytest.raises(TransportAuthenticationError):
+        await transport.request("GET /trans_cmd_string.cgi?cmd=2109&light=1&", timeout=2)
+    assert len(calls) == 1
+    assert "/get_status.cgi?name=admin" in calls[0]
+    assert not transport._authenticated
+
+
+@pytest.mark.parametrize("auth_mode", ["basic", "observed"])
 @pytest.mark.parametrize(
     "auth_response",
     [
+        "result=0;",
         "result=0;eye4_auth=10;",
         "result=0;eye4_auth='1';",
         "result=0;eye4_auth=true;",
@@ -1171,21 +1246,27 @@ async def test_observed_authentication_runs_once_per_protected_session():
         "result=0;eye4_auth=1;eye4_auth=0;",
     ],
 )
-async def test_observed_authentication_requires_one_exact_integer_success(auth_response):
-    transport = AioppppTransport(observed_config())
+async def test_authentication_requires_one_exact_integer_success(auth_mode, auth_response):
+    config = observed_config() if auth_mode == "observed" else VStarcamConfig(password="secret")
+    transport = AioppppTransport(config)
     transport._connected = True
     transport._session = object()
+    calls = []
 
     async def fake_send(command, *, timeout, expected_code):
+        calls.append(command)
         if "/eye4_authentication.cgi" in command:
             return auth_response
-        return "result=0;"
+        return "result=0;DualAuthentication=2;"
 
     transport._send_framed = fake_send
 
     with pytest.raises(TransportError, match="rejected"):
-        await transport.request("GET /get_params.cgi?x=1&", timeout=2.0)
-    assert not transport._observed_authenticated
+        await transport.request("GET /trans_cmd_string.cgi?cmd=2109&light=1&", timeout=2.0)
+    assert len(calls) == 2
+    assert "/get_status.cgi?name=admin" in calls[0]
+    assert "/eye4_authentication.cgi" in calls[1]
+    assert not transport._authenticated
 
 
 async def test_status_does_not_trigger_observed_authentication():
@@ -1685,7 +1766,7 @@ def test_response_reassembly_handles_a_split_cgi_header():
 
 
 async def test_requests_are_serialized_per_transport():
-    transport = AioppppTransport(VStarcamConfig(auth_mode="basic"))
+    transport = AioppppTransport(VStarcamConfig(password="camera-password"))
     transport._connected = True
     transport._session = object()
     active = 0

@@ -377,7 +377,8 @@ async def test_half_duplex_talk_wraps_channel_three_in_same_session_livestream()
     assert all(channel == 3 for channel, _payload in transport.channel_writes)
     assert len(transport.requests) == 4
     assert transport.requests[0] == (
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     )
     assert "/get_camera_params.cgi?" in transport.requests[1]
     assert "/livestream.cgi?streamid=10&substream=0&" in transport.requests[2]
@@ -613,7 +614,8 @@ async def test_direct_adpcm_refuses_explicit_full_duplex_capability():
 
     assert transport.channel_writes == []
     assert transport.requests == [
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 
@@ -642,7 +644,8 @@ async def test_direct_adpcm_refuses_unknown_malformed_capability(response):
 
     assert transport.channel_writes == []
     assert transport.requests == [
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 
@@ -662,7 +665,8 @@ async def test_direct_adpcm_refuses_explicit_g711_capability(field):
 
     assert transport.channel_writes == []
     assert transport.requests == [
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 

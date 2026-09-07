@@ -21,7 +21,8 @@ async def test_motion_settings_read_and_narrow_the_protected_params_response():
         "sensitivity_scale": "0 (highest) to 9 (lowest)",
     }
     assert transport.requests == [
-        "GET /get_params.cgi?loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_params.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 
@@ -41,5 +42,6 @@ async def test_wifi_status_read_and_narrow_the_protected_params_response():
         "channel": 6,
     }
     assert transport.requests == [
-        "GET /get_params.cgi?loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_params.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]

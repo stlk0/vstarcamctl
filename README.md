@@ -98,11 +98,13 @@ vstarcamctl --config camera.local.yaml time status
 vstarcamctl --config camera.local.yaml rtsp status
 ```
 
-On the tested camera, local CGI reads work after a factory reset and
-account-free Wi-Fi onboarding, while RTSP remains disabled. First `WebPwd`
-enable with basic credentials alone is unsupported; the guarded workflow
-requires authorized observed account credentials. See the
-[account and RTSP limitations](https://github.com/stlk0/vstarcamctl/blob/main/docs/experimental-features.md#external-camera-account-webpwd).
+On the tested camera, local CGI reads work after account-free Wi-Fi onboarding
+and after first `WebPwd` enable and restart. In `basic` mode, omit `account_id`
+or use `"0"`; the library handles the required local authentication steps.
+The guarded first-enable workflow can activate RTSP without a vendor account.
+Keep the local CGI password separate from the new RTSP password. See the
+[account and RTSP workflow](https://github.com/stlk0/vstarcamctl/blob/main/docs/experimental-features.md#external-camera-account-webpwd)
+for this experimental, model-dependent setup.
 
 For playback and recording, see the
 [CLI guide](https://github.com/stlk0/vstarcamctl/blob/main/docs/cli.md#camera-media).

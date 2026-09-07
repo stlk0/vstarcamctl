@@ -795,9 +795,9 @@ class VStarcamCamera:
         experimental: bool,
         confirm: bool,
     ) -> dict:
-        if self.config.auth_mode != "observed":
+        if self.config.auth_mode != "observed" and self.config.account_id not in (None, "0"):
             raise AccountConfigurationError(
-                "first WebPwd enable requires authorized observed account credentials"
+                "first WebPwd enable requires local account_id=0 or authorized observed account credentials"
             )
 
         dual_authentication = status.get("DualAuthentication")
@@ -834,8 +834,13 @@ class VStarcamCamera:
         if dual_authentication == 0:
             await send_step(
                 build_camera_owner_set_path(
-                    self.config.account_id or "",
-                    self.config.login_hash or "",
+                    self.config.account_id or "0",
+                    (
+                        self.config.login_hash
+                        if self.config.auth_mode == "observed"
+                        else self.config.password
+                    )
+                    or "",
                 ),
                 1,
             )

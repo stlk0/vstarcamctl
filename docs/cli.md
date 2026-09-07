@@ -216,8 +216,8 @@ Install the required FFmpeg executables on `PATH`: `ffprobe` for probing,
 
 After a reset, successful protected CGI reads do not establish RTSP readiness.
 Follow the [external camera account and RTSP workflow](experimental-features.md#external-camera-account-webpwd)
-for first `WebPwd` enable when needed and authorized observed credentials are
-available, then use fresh `rtsp status` and
+for guarded first `WebPwd` enable when needed, including account-free setup
+with `basic` mode and an absent or zero account ID, then use fresh `rtsp status` and
 `stream probe` commands. Media commands do not perform that password workflow.
 
 ```bash

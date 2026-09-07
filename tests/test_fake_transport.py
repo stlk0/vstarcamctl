@@ -184,7 +184,8 @@ async def test_fake_transport_captures_exact_command_and_parses_response():
     await camera.close()
     assert result == {"alarm_status": 0, "alias": "camera"}
     assert transport.requests == [
-        "GET /get_status.cgi?vuid=VSTG-000001-AAAAA&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?vuid=VSTG-000001-AAAAA&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 

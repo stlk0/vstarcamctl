@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Complete same-session CGI authentication for local owner zero after external
+  password enable, using an empty token when the camera requires dual authentication.
 - Redact complete quoted credentials, escaped delimiters, and CGI username aliases.
 - Pass absolute local media paths to FFmpeg so filenames cannot become options
   or protocol URLs; reject invalid output directories before starting a stream.
@@ -37,9 +39,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Remove an unreachable audio-cleanup branch left from an earlier cleanup order.
 - Validate normalized device and protected imaging reads in the opt-in hardware test.
 - Use the string `"0"` in the Wi-Fi setup QR when no account ID is supplied.
-- Document successful account-free QR onboarding separately from unsupported
-  owner-zero first enable, which enabled RTSP but lost protected CGI access in
-  a private experiment. Keep the observed-credentials requirement for first enable.
+- Treat an omitted account ID as local owner zero and allow guarded first
+  external-password enable with local credentials, preserving the CGI password.
 - Support Python 3.11–3.13, with unit tests for each version in CI.
 - Share acknowledgement-error handling, discovery descriptor construction,
   media output checks, and CLI cleanup without changing command policies.

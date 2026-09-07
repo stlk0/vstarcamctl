@@ -51,9 +51,9 @@ def build_auth_params(config: VStarcamConfig) -> list[tuple[str, str]]:
                 ("loginpas", config.login_hash or ""),
             ]
         )
-    elif config.account_id:
-        # Factory onboarding requires the current local password as loginpas.
-        params.extend([("userId", config.account_id), ("loginpas", password)])
+    else:
+        # The SDK uses owner zero when no vendor account is configured.
+        params.extend([("userId", config.account_id or "0"), ("loginpas", password)])
     params.extend([("user", username), ("pwd", password)])
     return params
 
@@ -96,15 +96,17 @@ def format_get_request(path: str, config: VStarcamConfig) -> str:
 
 
 def format_eye4_auth_request(config: VStarcamConfig) -> str:
-    """Build the dual-auth preflight for observed authentication mode."""
+    """Build account verification using configured or local owner-zero credentials."""
 
     auth_params = build_auth_params(config)
-    if not config.login_token:
-        raise RawCommandError("observed dual auth requires login_token")
+    if config.auth_mode == "basic" and config.account_id not in (None, "0"):
+        raise RawCommandError(
+            "dual authentication for a nonzero account_id requires authorized observed account credentials"
+        )
     query = urlencode(
         [
-            ("loginAccount", config.account_id or ""),
-            ("loginToken", config.login_token),
+            ("loginAccount", config.account_id or "0"),
+            ("loginToken", config.login_token if config.auth_mode == "observed" else ""),
             *auth_params,
         ]
     )

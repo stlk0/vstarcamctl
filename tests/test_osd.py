@@ -106,7 +106,8 @@ async def test_timestamp_osd_uses_exact_confirmed_login_status_request():
 
     assert await camera.get_timestamp_osd() is True
     assert transport.requests == [
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ]
 
 

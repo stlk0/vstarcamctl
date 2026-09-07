@@ -220,9 +220,12 @@ async def test_live_confirmed_getters_use_exact_paths_and_hide_rtsp_credentials(
     }
     assert await camera.get_onvif_settings() == {"configured_enabled": False}
     assert transport.requests == [
-        "GET /get_rtsp.cgi?loginuse=admin&user=admin&pwd=camera-secret&",
-        "GET /get_params.cgi?loginuse=admin&user=admin&pwd=camera-secret&",
-        "GET /get_onvif.cgi?loginuse=admin&user=admin&pwd=camera-secret&",
+        "GET /get_rtsp.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&",
+        "GET /get_params.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&",
+        "GET /get_onvif.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&",
     ]
 
 
@@ -258,7 +261,8 @@ async def test_audio_status_combines_params_and_record_getters():
     assert "/get_record.cgi?" in transport.requests[1]
     assert "/get_camera_params.cgi?" in transport.requests[2]
     assert transport.requests[3] == (
-        "GET /get_status.cgi?name=admin&loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_status.cgi?name=admin&loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     )
 
 
@@ -436,7 +440,7 @@ async def test_rtsp_write_preserves_omitted_values_and_is_sent_once():
     assert transport.requests[1] == (
         "GET /set_rtsp.cgi?rtspenable=0&rtspport=10554"
         "&rtspuser=existing-user&rtsppwd=existing-secret"
-        "&loginuse=admin&user=admin&pwd=camera-secret&"
+        "&loginuse=admin&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     )
 
 

@@ -53,7 +53,8 @@ async def test_camera_image_adjustments_use_exact_confirmed_endpoint(timeouts):
         "contrast": 32,
     }
     assert transport.requests == [
-        "GET /get_camera_params.cgi?loginuse=admin&user=admin&pwd=camera-secret&"
+        "GET /get_camera_params.cgi?loginuse=admin"
+        "&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     ] * (timeouts + 1)
     assert transport.connect_count == timeouts + 1
     assert transport.close_count == timeouts

@@ -284,13 +284,11 @@ camera or use the recovery plan instead of resending.
 Changing an existing `WebPwd` uses one `ExUser`/`ExPwd`/`ExUserSwitch=1`
 request. First enable is different: the library checks the camera's
 `DualAuthentication` state and, when required, performs the guarded owner,
-external-enable, password, and restart sequence. That path requires authorized
-`observed` account credentials in the private configuration. The current
-first-enable workflow rejects `basic`, including an absent account ID or
-`account_id="0"`; successful protected CGI reads with that configuration do not
-provide the required owner credentials. These credentials are separate from
-the local CGI factory password. Prepare recovery, store the new password in an
-environment variable, and run one guarded operation:
+external-enable, password, and restart sequence. In `basic` mode, an absent
+account ID or `account_id="0"` uses the local CGI password as the owner
+credential, without a vendor account. `observed` mode uses the privately
+configured account ID and login hash. Prepare recovery, store the new external
+password in an environment variable, and run one guarded operation:
 
 ```bash
 export VSTARCAM_NEW_CAMERA_PASSWORD='replace-with-new-password'
@@ -302,12 +300,16 @@ requires the requested `WebPwd` from a fresh post-restart session; an
 acknowledgement alone is not enough. After an uncertain outcome, do not resend
 any password step. Verify state through the planned recovery procedure.
 
-On the previously validated camera, first `WebPwd` enable also activated RTSP
+Keep `VSTARCAM_PASSWORD` set to the local CGI password. The new `WebPwd` is a
+separate external-access password; use `VSTARCAM_RTSP_PASSWORD` to supply it to
+stream commands.
+
+On the tested camera, first `WebPwd` enable also activated RTSP
 and RTSP authentication, and the workflow restarted the camera without a
-separate `rtsp set`. That successful post-restart CGI verification used the
-authorized account ID, login hash, and token. After a successful password
-operation, use fresh commands to inspect the resulting configuration and
-verify the actual stream:
+separate `rtsp set`. Protected CGI reads worked after restart with account-free
+`basic` credentials and with authorized `observed` credentials. After a
+successful password operation, use fresh commands to inspect the resulting
+configuration and verify the actual stream:
 
 ```bash
 vstarcamctl --config config.local.yaml rtsp status
@@ -318,13 +320,10 @@ Check these results before considering a separate RTSP configuration write.
 Verifying `WebPwd` alone does not establish stream availability, and the
 observed first-enable behavior is not a guarantee for every camera model.
 
-On the tested reset camera, QR onboarding with account value `"0"` and protected
-CGI reads with the known local password worked. A separate private owner-zero
-experiment enabled RTSP access with the new `WebPwd`, but protected CGI reads
-were rejected after restart: a complete `0x6001` response carried `result=-2`,
-while login status reported `DualAuthentication=2` and external access enabled.
-The exact firmware cause is unknown. The owner-zero first-enable sequence is
-not supported by the public API; a working RTSP login does not establish CGI
-access. This result does not establish a general requirement for a vendor
-account to use RTSP. Use the planned recovery procedure after an authentication
-refusal instead of repeating account writes.
+After this transition, a successful login status alone does not authorize
+protected CGI. The library follows it with the required authentication request
+in the same session. For account-free control, the camera accepted account
+value `"0"` and an empty token; omitting this step caused the earlier loss of
+protected reads. A working RTSP login still does not establish CGI access.
+Use the planned recovery procedure after an authentication refusal instead of
+repeating account writes.

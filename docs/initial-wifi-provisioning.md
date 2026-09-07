@@ -90,11 +90,10 @@ vstarcamctl --config new-camera.local.yaml --auth-mode basic --account-id 0 para
 ```
 
 These commands use the local password and the zero account value, without a
-vendor account ID, login hash, or token. This combination passed protected
-parameter reads on the tested reset camera after QR onboarding. The QR's
-`U` value is not automatically copied into a control profile, so the example
-selects `--account-id 0` explicitly. If another camera's current state needs
-additional credentials, follow the
+vendor account ID, login hash, or token. Omitting `account_id` in `basic` mode
+selects the same flow. Protected parameter reads passed on the tested camera
+after QR onboarding and after first `WebPwd` enable and restart. If another
+camera's current state needs additional credentials, follow the
 [authentication configuration](getting-started.md#authentication-modes).
 
 Run these as separate commands so each check gets a fresh PPPP session. A
@@ -102,9 +101,10 @@ successful `status` proves transport readiness; a successful protected
 `params` confirms access to protected CGI reads. It does not establish RTSP
 availability. For media setup after a reset, follow the
 [external camera account and RTSP workflow](experimental-features.md#external-camera-account-webpwd).
-Its first-enable path requires authorized observed credentials. The private
-owner-zero experiment enabled RTSP but lost protected CGI access after restart;
-successful account-free onboarding does not validate that later transition.
+Its guarded first-enable path supports `basic` mode with an absent or zero
+account ID. Keep using the original local CGI password for control and the
+new `WebPwd` for RTSP. The library handles the additional local authentication
+required after the transition.
 
 The QR exchange and Wi-Fi join are local camera functions. Any separate
 internet-backed vendor account binding is outside provisioning and local

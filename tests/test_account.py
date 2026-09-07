@@ -194,7 +194,7 @@ async def test_account_password_write_checks_slot_and_is_sent_once():
     assert transport.requests[1] == (
         "GET /set_users.cgi?pwd_change_realtime=1"
         "&ExUser=admin&ExPwd=replacement-secret&ExUserSwitch=1"
-        "&loginuse=admin&user=admin&pwd=camera-secret&"
+        "&loginuse=admin&userId=0&loginpas=camera-secret&user=admin&pwd=camera-secret&"
     )
     assert "/get_params.cgi?" in transport.requests[2]
     assert transport.close_count == 2
@@ -324,14 +324,36 @@ async def test_account_first_enable_failure_stops_at_exact_one_shot_prefix(
 
 
 @pytest.mark.parametrize("account_id", [None, "0"], ids=["missing-account", "zero-account"])
-async def test_account_password_first_enable_requires_observed_account_credentials(account_id):
+async def test_account_password_first_enable_without_account_preserves_owner_password(account_id):
+    transport = FakeTransport(_first_enable_responses(0, verify=True))
+    camera = VStarcamCamera(config(account_id=account_id), transport=transport)
+
+    assert await camera.set_camera_account_password(
+        _NEW_PASSWORD,
+        experimental=True,
+        confirm=True,
+        recovery_ready=True,
+    ) == {"result": 0, "DualAuthentication": 2, "web_password_verified": True}
+
+    assert transport.requests == [
+        _FIRST_ENABLE_REQUEST[stage]
+        .replace("account-id", "0")
+        .replace("owner-credential", "camera-secret")
+        for stage in (*_FIRST_ENABLE_STAGES[0], "params")
+    ]
+    assert camera.config.password == "camera-secret"
+    assert not transport.responses
+    assert transport.connect_count == transport.close_count == 2
+
+
+async def test_account_password_first_enable_with_nonzero_account_requires_observed_credentials():
     transport = FakeTransport(
         [
             "var user3_name='admin';",
             "var DualAuthentication=0;",
         ]
     )
-    camera = VStarcamCamera(config(account_id=account_id), transport=transport)
+    camera = VStarcamCamera(config(account_id="account-id"), transport=transport)
 
     with pytest.raises(AccountConfigurationError, match="observed account credentials"):
         await camera.set_camera_account_password(

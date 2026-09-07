@@ -1,0 +1,205 @@
+"""RTSP, ONVIF, and audio setting normalization and request construction."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, Literal
+from urllib.parse import urlencode
+
+from ._capabilities import capability_state
+from ._normalize import as_flag, require_safe_text, require_zero_result
+from .errors import MediaConfigurationError
+
+AudioVolumeTarget = Literal["microphone", "speaker"]
+AUDIO_VOLUME_MIN = 0
+AUDIO_VOLUME_MAX = 31
+_AUDIO_VOLUME_PARAMS: dict[AudioVolumeTarget, int] = {
+    "microphone": 24,
+    "speaker": 25,
+}
+
+
+def _as_flag(value: Any, field: str) -> bool:
+    return as_flag(value, field, MediaConfigurationError)
+
+
+def build_rtsp_set_path(
+    enabled: bool,
+    port: int,
+    username: str,
+    password: str,
+) -> str:
+    if not isinstance(enabled, bool):
+        raise MediaConfigurationError("RTSP enabled state must be boolean")
+    minimum_port = 1 if enabled else 0
+    if not isinstance(port, int) or isinstance(port, bool) or not minimum_port <= port <= 65535:
+        allowed = "1 to 65535" if enabled else "0 to 65535"
+        raise MediaConfigurationError(f"RTSP port must be an integer from {allowed}")
+    require_safe_text(username, "RTSP username", MediaConfigurationError)
+    require_safe_text(password, "RTSP password", MediaConfigurationError)
+    query = urlencode(
+        [
+            ("rtspenable", int(enabled)),
+            ("rtspport", port),
+            ("rtspuser", username),
+            ("rtsppwd", password),
+        ]
+    )
+    return f"/set_rtsp.cgi?{query}"
+
+
+def parse_livestream_set_response(payload: Mapping[str, Any]) -> dict[str, int]:
+    """Validate the observed legacy-0x6037 livestream acknowledgement."""
+
+    require_zero_result(payload, "livestream", MediaConfigurationError)
+    return {"result": 0}
+
+
+def build_onvif_set_path(enabled: bool) -> str:
+    if not isinstance(enabled, bool):
+        raise MediaConfigurationError("ONVIF enabled state must be boolean")
+    return f"/set_onvif.cgi?{urlencode({'onvifenable': int(enabled)})}"
+
+
+def build_record_audio_set_path(enabled: bool) -> str:
+    if not isinstance(enabled, bool):
+        raise MediaConfigurationError("record-audio enabled state must be boolean")
+    return f"/set_recordsch.cgi?{urlencode({'record_audio': int(enabled)})}"
+
+
+def build_audio_volume_set_path(target: AudioVolumeTarget, level: int) -> str:
+    if target not in _AUDIO_VOLUME_PARAMS:
+        raise MediaConfigurationError("audio volume target must be microphone or speaker")
+    if (
+        not isinstance(level, int)
+        or isinstance(level, bool)
+        or not AUDIO_VOLUME_MIN <= level <= AUDIO_VOLUME_MAX
+    ):
+        raise MediaConfigurationError(
+            f"audio volume must be an integer from {AUDIO_VOLUME_MIN} to {AUDIO_VOLUME_MAX}"
+        )
+    return "/camera_control.cgi?" + urlencode(
+        {"param": _AUDIO_VOLUME_PARAMS[target], "value": level}
+    )
+
+
+def parse_audio_volume_set_response(payload: Mapping[str, Any]) -> dict[str, int]:
+    """Validate the observed camera-control volume acknowledgement."""
+
+    require_zero_result(payload, "audio volume", MediaConfigurationError)
+    return {"result": 0}
+
+
+def build_pppp_livestream_path(*, enabled: bool, substream: int = 0) -> str:
+    if not isinstance(enabled, bool):
+        raise MediaConfigurationError("livestream enabled state must be boolean")
+    if not isinstance(substream, int) or isinstance(substream, bool) or substream not in (0, 1):
+        raise MediaConfigurationError("livestream substream must be 0 or 1")
+    if not enabled:
+        return "/livestream.cgi?streamid=16&substream=0"
+    return f"/livestream.cgi?streamid=10&substream={substream}"
+
+
+def parse_rtsp_status(
+    payload: dict[str, Any],
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if "rtspenable" not in payload:
+        raise MediaConfigurationError("RTSP response does not contain rtspenable")
+    port = payload.get("rtspport")
+    if not isinstance(port, int) or isinstance(port, bool):
+        raise MediaConfigurationError("RTSP response does not contain a numeric rtspport")
+    dedicated_username_configured = bool(payload.get("rtspuser"))
+    dedicated_password_configured = bool(payload.get("rtsppwd"))
+    params = params or {}
+    auth_value = params.get("rtsp_auth_enable")
+    if auth_value in (0, 1, "0", "1", False, True):
+        authentication_enabled = _as_flag(auth_value, "rtsp_auth_enable")
+    else:
+        authentication_enabled = None
+
+    camera_account_configured = bool(params.get("WebPwd"))
+    if authentication_enabled is False:
+        credential_source = "none"
+    elif authentication_enabled is None:
+        credential_source = "unknown"
+    elif dedicated_username_configured or dedicated_password_configured:
+        credential_source = "dedicated_rtsp"
+    elif camera_account_configured:
+        credential_source = "camera_account"
+    else:
+        credential_source = "unknown"
+
+    return {
+        "configured_enabled": _as_flag(payload["rtspenable"], "rtspenable"),
+        "reported_port": port,
+        "authentication_enabled": authentication_enabled,
+        "credential_source": credential_source,
+        "dedicated_username_configured": dedicated_username_configured,
+        "dedicated_password_configured": dedicated_password_configured,
+    }
+
+
+def parse_onvif_status(payload: dict[str, Any]) -> dict[str, Any]:
+    if "onvifenable" not in payload:
+        raise MediaConfigurationError("ONVIF response does not contain onvifenable")
+    result = {"configured_enabled": _as_flag(payload["onvifenable"], "onvifenable")}
+    if isinstance(payload.get("onvifport"), int) and not isinstance(payload["onvifport"], bool):
+        result["reported_port"] = payload["onvifport"]
+    return result
+
+
+def parse_audio_status(
+    params: dict[str, Any],
+    record: dict[str, Any],
+    camera_params: dict[str, Any] | None = None,
+    status: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    camera_params = camera_params or {}
+    status = status or {}
+    disable_audio = params.get("disable_audio")
+    record_audio = record.get("record_audio")
+    microphone_volume = camera_params.get("involume")
+    speaker_volume = camera_params.get("outvolume")
+    g711a_fields = ("support_g711a", "support_audio_g711a")
+    g711a_state = capability_state(
+        status,
+        g711a_fields,
+    )
+    echo_cancellation_state = capability_state(status, ("EchoCancellationVer",))
+    result: dict[str, Any] = {
+        "capability_flag_present": disable_audio in (0, 1, "0", "1", False, True),
+        "recording_setting_present": record_audio in (0, 1, "0", "1", False, True),
+        "microphone_volume_present": (
+            isinstance(microphone_volume, int)
+            and not isinstance(microphone_volume, bool)
+            and AUDIO_VOLUME_MIN <= microphone_volume <= AUDIO_VOLUME_MAX
+        ),
+        "speaker_volume_present": (
+            isinstance(speaker_volume, int)
+            and not isinstance(speaker_volume, bool)
+            and AUDIO_VOLUME_MIN <= speaker_volume <= AUDIO_VOLUME_MAX
+        ),
+        "g711a_capability_present": any(field in status for field in g711a_fields),
+        "echo_cancellation_capability_present": "EchoCancellationVer" in status,
+    }
+    if result["capability_flag_present"]:
+        result["audio_available"] = not _as_flag(disable_audio, "disable_audio")
+    if result["recording_setting_present"]:
+        result["recording_enabled"] = _as_flag(record_audio, "record_audio")
+    if result["microphone_volume_present"]:
+        result["microphone_volume"] = microphone_volume
+    if result["speaker_volume_present"]:
+        result["speaker_volume"] = speaker_volume
+    if result["microphone_volume_present"] or result["speaker_volume_present"]:
+        result["volume_range"] = {
+            "minimum": AUDIO_VOLUME_MIN,
+            "maximum": AUDIO_VOLUME_MAX,
+        }
+    if result["g711a_capability_present"] and g711a_state != "unknown":
+        result["g711a_supported"] = g711a_state == "supported"
+    if result["echo_cancellation_capability_present"] and echo_cancellation_state != "unknown":
+        supported = echo_cancellation_state == "supported"
+        result["echo_cancellation_supported"] = supported
+        result["full_duplex_audio_supported"] = supported
+    return result

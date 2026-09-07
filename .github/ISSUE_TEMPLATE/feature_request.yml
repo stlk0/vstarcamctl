@@ -1,0 +1,57 @@
+name: Feature request
+description: Propose an improvement to the public library, CLI, or documentation
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem rather than private device details. Never
+        attach credentials, device dumps, vendor application files, or private
+        media.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to accomplish, and who benefits?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Include a CLI or Python API sketch when useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Does this change camera state?
+      options:
+        - No, it is read-only or documentation-only
+        - Yes, it may change reversible settings
+        - Yes, it may affect connectivity, credentials, or recovery
+        - Unsure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and documentation.
+          required: true
+        - label: This request fits a local camera-control library or CLI.
+          required: true
+        - label: I removed all real credentials and private identifying device/network data.
+          required: true

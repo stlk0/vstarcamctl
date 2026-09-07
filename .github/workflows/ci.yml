@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Reject tracked private artifacts and credential signatures
+        run: python scripts/release_checks.py tree
+
+      - name: Install development tools
+        run: python -m pip install -e ".[provisioning,dev]"
+
+      - name: Lint
+        run: ruff check src tests examples scripts
+
+      - name: Check formatting
+        run: ruff format --check src tests examples scripts
+
+      - name: Test branch coverage
+        run: |
+          coverage run -m pytest -q --disable-socket --allow-unix-socket
+          coverage report
+          coverage xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-python-3.13
+          path: coverage.xml
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.13"
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: ubuntu-latest
+            python: "3.12"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -e ".[provisioning,dev]"
+
+      - name: Run tests
+        run: pytest -q
+
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: python -m pip install build twine
+
+      - name: Set reproducible build timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Check distribution contents
+        run: python scripts/release_checks.py distributions
+
+      - name: Validate distributions
+        run: python -m twine check dist/*
+
+      - name: Smoke-test wheel in a clean environment
+        run: |
+          python -m venv .wheel-smoke
+          .wheel-smoke/bin/python -m pip install dist/*.whl
+          .wheel-smoke/bin/python -m pip check
+          .wheel-smoke/bin/python -c "import importlib.metadata as m, tomllib; from pathlib import Path; import vstarcamctl; expected = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']; assert vstarcamctl.__version__ == m.version('vstarcamctl') == expected"
+          .wheel-smoke/bin/python -c "from vstarcamctl.command_catalog import CommandCatalog; CommandCatalog.load()"
+          .wheel-smoke/bin/vstarcamctl --version
+          .wheel-smoke/bin/vstarcamctl --help >/dev/null
+
+      - name: Smoke-test sdist in a clean environment
+        run: |
+          python -m venv .sdist-smoke
+          .sdist-smoke/bin/python -m pip install dist/*.tar.gz
+          .sdist-smoke/bin/python -m pip check
+          .sdist-smoke/bin/python -c "import importlib.metadata as m, tomllib; from pathlib import Path; import vstarcamctl; expected = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']; assert vstarcamctl.__version__ == m.version('vstarcamctl') == expected"
+          .sdist-smoke/bin/python -c "from vstarcamctl.command_catalog import CommandCatalog; CommandCatalog.load()"
+          .sdist-smoke/bin/vstarcamctl --version
+          .sdist-smoke/bin/vstarcamctl --help >/dev/null

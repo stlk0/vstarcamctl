@@ -1,0 +1,537 @@
+version: 1
+commands:
+  - name: status
+    path: "/get_status.cgi?vuid={device_id?}"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: login_status
+    path: "/get_status.cgi?name={username}"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: params
+    path: "/get_params.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: datetime_set
+    path: "/set_datetime.cgi?tz={timezone}&ntp_enable={enabled}&ntp_svr={server}&now={unix_time}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: eye4_authentication
+    path: "/eye4_authentication.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: siren_on
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&siren=1"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: siren_off
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&siren=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: white_light_on
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&light=1"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [support_WhiteLed_Ctrl, support_manual_light, support_pure_white_light]
+
+  - name: white_light_off
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&light=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [support_WhiteLed_Ctrl, support_manual_light, support_pure_white_light]
+
+  - name: actuator_status
+    path: "/trans_cmd_string.cgi?cmd=2109&command=2"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: alarm_led_set
+    path: "/trans_cmd_string.cgi?cmd=2109&command=0&alarmLed={enabled}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: ptz_up_start
+    path: "/decoder_control.cgi?command=0&onestep=0"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: false
+    capability_flags: [haveMotor]
+
+  - name: ptz_up_stop
+    path: "/decoder_control.cgi?command=1&onestep=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: ptz_down_start
+    path: "/decoder_control.cgi?command=2&onestep=0"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: false
+    capability_flags: [haveMotor]
+
+  - name: ptz_down_stop
+    path: "/decoder_control.cgi?command=3&onestep=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: ptz_left_start
+    path: "/decoder_control.cgi?command=4&onestep=0"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: false
+    capability_flags: [haveMotor]
+
+  - name: ptz_left_stop
+    path: "/decoder_control.cgi?command=5&onestep=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: ptz_right_start
+    path: "/decoder_control.cgi?command=6&onestep=0"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: false
+    capability_flags: [haveMotor]
+
+  - name: ptz_right_stop
+    path: "/decoder_control.cgi?command=7&onestep=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: osd_12h_status
+    path: "/trans_cmd_string.cgi?cmd=4109&command=0"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+    capability_flags: [12h_mode_support]
+
+  - name: osd_12h_set
+    path: "/trans_cmd_string.cgi?cmd=4109&command=1&osd_12h_mode={enabled}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [12h_mode_support]
+
+  - name: logo_osd_set
+    path: "/camera_control.cgi?param=11&value={enabled}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    capability_flags: [support_custom_logo_show]
+
+  - name: camera_params_status
+    path: "/get_camera_params.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: night_vision_color_set
+    path: "/camera_control.cgi?param=33&value={mode}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [support_full_color_night_vision_mode]
+
+  - name: night_vision_low_light_set
+    path: "/camera_control.cgi?param=14&value={mode}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: infrared_light_status
+    path: "/trans_cmd_string.cgi?cmd=2120&command=1"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: infrared_light_set
+    path: "/trans_cmd_string.cgi?cmd=2120&command=0&InfraredLaser={enabled}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: camera_account_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&ExUser={username}&ExPwd={password}&ExUserSwitch=1"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    recovery_required: true
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: camera_owner_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&OwnerUser={username}&OwnerPwd={password}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    recovery_required: true
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: camera_reboot
+    path: "/reboot.cgi"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    recovery_required: true
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: camera_user3_password_set
+    path: "/set_users.cgi?pwd_change_realtime=1&user3={username}&pwd3={password}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: true
+
+  - name: rtsp_status
+    path: "/get_rtsp.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: rtsp_set
+    path: "/set_rtsp.cgi?rtspenable={enabled}&rtspport={port}&rtspuser={username}&rtsppwd={password}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: onvif_status
+    path: "/get_onvif.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: onvif_set
+    path: "/set_onvif.cgi?onvifenable={enabled}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: record_status
+    path: "/get_record.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: microphone_volume_set
+    path: "/camera_control.cgi?param=24&value={level}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: speaker_volume_set
+    path: "/camera_control.cgi?param=25&value={level}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: audio_talk_start
+    path: "/audiostream.cgi?streamid=7"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: audio_talk_stop
+    path: "/audiostream.cgi?streamid=16"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: audio_talk_adpcm_channel
+    path: "pppp://channel/3?codec=ima_adpcm"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: failed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: pppp_livestream_start
+    path: "/livestream.cgi?streamid=10&substream={substream}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    raw_accessible: false
+    tested_on_device: true
+
+  - name: pppp_livestream_stop
+    path: "/livestream.cgi?streamid=16&substream=0"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+
+  - name: audio_talk_adpcm_with_livestream
+    path: "pppp://session/talk?codec=ima_adpcm&prerequisite=livestream"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: record_audio_set
+    path: "/set_recordsch.cgi?record_audio={enabled}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: motion_detection_set
+    path: "/set_alarm.cgi?enable_alarm_audio={enable_alarm_audio}&motion_armed={enabled}&motion_sensitivity={sensitivity}&input_armed={input_armed}&ioin_level={ioin_level}&iolinkage={iolinkage}&ioout_level={ioout_level}&preset={preset}&mail={mail}&snapshot={snapshot}&record={record}&upload_interval={upload_interval}&schedule_enable={schedule_enable}&schedule_sun_0={schedule_sun_0}&schedule_sun_1={schedule_sun_1}&schedule_sun_2={schedule_sun_2}&schedule_mon_0={schedule_mon_0}&schedule_mon_1={schedule_mon_1}&schedule_mon_2={schedule_mon_2}&schedule_tue_0={schedule_tue_0}&schedule_tue_1={schedule_tue_1}&schedule_tue_2={schedule_tue_2}&schedule_wed_0={schedule_wed_0}&schedule_wed_1={schedule_wed_1}&schedule_wed_2={schedule_wed_2}&schedule_thu_0={schedule_thu_0}&schedule_thu_1={schedule_thu_1}&schedule_thu_2={schedule_thu_2}&schedule_fri_0={schedule_fri_0}&schedule_fri_1={schedule_fri_1}&schedule_fri_2={schedule_fri_2}&schedule_sat_0={schedule_sat_0}&schedule_sat_1={schedule_sat_1}&schedule_sat_2={schedule_sat_2}&defense_plan1={defense_plan1}&defense_plan2={defense_plan2}&defense_plan3={defense_plan3}&defense_plan4={defense_plan4}&defense_plan5={defense_plan5}&defense_plan6={defense_plan6}&defense_plan7={defense_plan7}&defense_plan8={defense_plan8}&defense_plan9={defense_plan9}&defense_plan10={defense_plan10}&defense_plan11={defense_plan11}&defense_plan12={defense_plan12}&defense_plan13={defense_plan13}&defense_plan14={defense_plan14}&defense_plan15={defense_plan15}&defense_plan16={defense_plan16}&defense_plan17={defense_plan17}&defense_plan18={defense_plan18}&defense_plan19={defense_plan19}&defense_plan20={defense_plan20}&defense_plan21={defense_plan21}&CloudVideoDuration={cloud_video_duration?}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: motion_regions_status
+    path: "/trans_cmd_string.cgi?cmd=2123&command=1&sensor=0"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    raw_accessible: false
+    tested_on_device: true
+    capability_flags: [support_motionArea]
+
+  - name: human_detection_status
+    path: "/trans_cmd_string.cgi?cmd=2126&command=1"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: human_detection_set
+    path: "/trans_cmd_string.cgi?cmd=2106&command=4&humanDetection={sensitivity}&DistanceAdjust={distance}&HumanoidDetection={enabled}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    capability_flags: [support_humanDetect]
+
+  - name: human_sensitivity_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&sensitive={sensitivity}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [support_humanDetect, support_humanoidFrame]
+
+  - name: human_frame_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&bHumanoidFrame={enabled}"
+    read_or_write: write
+    risk_level: safe_write
+    confirmation_status: confirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [support_humanoidFrame]
+
+  - name: human_tracking_status
+    path: "/trans_cmd_string.cgi?cmd=2127&command=1"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: human_tracking_set
+    path: "/trans_cmd_string.cgi?cmd=2127&command=0&enable={enabled}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: true
+    capability_flags: [haveMotor]
+
+  - name: human_zoom_tracking_set
+    path: "/trans_cmd_string.cgi?cmd=2126&command=0&humanoid_zoom={enabled}"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    tested_on_device: false
+    capability_flags: [support_humanoid_zoom]
+
+  - name: wifi_scan
+    path: "/wifi_scan.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: confirmed
+    tested_on_device: true
+
+  - name: wifi_set
+    path: "/set_wifi.cgi?ssid={ssid}&channel={channel}&authtype={authtype}&wpa_psk={wpa_psk}&enable=1"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: hypothesis
+    retry_policy: one_shot
+    recovery_required: true
+    raw_accessible: false
+    tested_on_device: false
+
+  - name: factory_reset_blocked
+    path: "/restore_factory.cgi"
+    read_or_write: write
+    risk_level: destructive
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: storage_format_blocked
+    path: "/set_formatsd.cgi"
+    read_or_write: write
+    risk_level: destructive
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: storage_delete_blocked
+    path: "/del_file.cgi"
+    read_or_write: write
+    risk_level: destructive
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: device_download_blocked
+    path: "/auto_download_file.cgi"
+    read_or_write: write
+    risk_level: destructive
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: call_status_blocked
+    path: "/callstatus.cgi"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: vendor_binding_blocked
+    path: "/set_ipc_binding_info.cgi"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: vendor_push_user_blocked
+    path: "/set_update_push_user.cgi"
+    read_or_write: write
+    risk_level: risky_write
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: factory_params_blocked
+    path: "/get_factory_param.cgi"
+    read_or_write: read
+    risk_level: read_only
+    confirmation_status: dangerous_do_not_run
+    tested_on_device: false
+
+  - name: trans_cmd_4120
+    path: "/trans_cmd_string.cgi?cmd=4120&command=0"
+    read_or_write: write
+    risk_level: unknown
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: false
+
+  - name: trans_cmd_8000
+    path: "/trans_cmd_string.cgi?cmd=8000&command=0"
+    read_or_write: write
+    risk_level: unknown
+    confirmation_status: observed_unconfirmed
+    retry_policy: one_shot
+    tested_on_device: false

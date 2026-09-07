@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vstarcamctl"
+version = "0.2.0"
+description = "Local PPPP/CGI control tools for VStarcam-compatible cameras"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "VStarcamCtl contributors"}]
+keywords = ["vstarcam", "pppp", "cgi", "ip-camera", "rtsp", "onvif", "home-automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Video :: Capture",
+    "Topic :: System :: Networking",
+]
+dependencies = [
+    "aiopppp==0.2.3",
+    "PyYAML>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/stlk0/vstarcamctl"
+Documentation = "https://github.com/stlk0/vstarcamctl/tree/main/docs"
+Repository = "https://github.com/stlk0/vstarcamctl"
+Issues = "https://github.com/stlk0/vstarcamctl/issues"
+Changelog = "https://github.com/stlk0/vstarcamctl/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+provisioning = ["qrcode>=7.4.2"]
+dev = [
+    "build>=1.2",
+    "coverage[toml]>=7.6",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-socket>=0.7",
+    "ruff>=0.12",
+    "twine>=6.0",
+]
+
+[project.scripts]
+vstarcamctl = "vstarcamctl.cli:main"
+
+[tool.hatch.build.targets.wheel]
+core-metadata-version = "2.4"
+packages = ["src/vstarcamctl"]
+
+[tool.hatch.build.targets.sdist]
+core-metadata-version = "2.4"
+only-include = [
+    "src/vstarcamctl",
+    "tests",
+    "examples",
+    "scripts",
+    "docs",
+    ".github",
+    ".gitignore",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "pytest.ini",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.coverage.run]
+branch = true
+source = ["vstarcamctl"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
